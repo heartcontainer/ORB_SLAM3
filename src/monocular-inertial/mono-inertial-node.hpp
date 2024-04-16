@@ -20,7 +20,7 @@ using ImageMsg = sensor_msgs::msg::Image;
 class MonoInertialNode : public rclcpp::Node
 {
 public:
-    MonoInertialNode(ORB_SLAM3::System *pSLAM, const string &imu_topic, const string &color_topic);
+    MonoInertialNode(ORB_SLAM3::System *pSLAM, const string &color_topic, const string &imu_topic);
     ~MonoInertialNode();
 
 private:

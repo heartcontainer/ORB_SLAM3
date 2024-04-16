@@ -1,19 +1,24 @@
-#include "mono-inertial-node.hpp"
+#include "rgbd-inertial-node.hpp"
 
 #include <opencv2/core/core.hpp>
 
 using std::placeholders::_1;
 
-MonoInertialNode::MonoInertialNode(ORB_SLAM3::System *SLAM, const string &color_topic, const string &imu_topic) : Node("ORB_SLAM3_ROS2"),
-                                                                                                                  SLAM_(SLAM)
+RgbdInertialNode::RgbdInertialNode(ORB_SLAM3::System *SLAM, const string &color_topic, const string &depth_topic, const string &imu_topic) : Node("ORB_SLAM3_ROS2"),
+                                                                                                                                             SLAM_(SLAM)
 {
-    subImu_ = this->create_subscription<ImuMsg>(imu_topic, 1000, std::bind(&MonoInertialNode::GrabImu, this, _1));
-    subImg_ = this->create_subscription<ImageMsg>(color_topic, 100, std::bind(&MonoInertialNode::GrabImage, this, _1));
+    subImu_ = this->create_subscription<ImuMsg>(imu_topic, 1000, std::bind(&RgbdInertialNode::GrabImu, this, _1));
 
-    syncThread_ = new std::thread(&MonoInertialNode::SyncWithImu, this);
+    rgb_sub = std::make_shared<message_filters::Subscriber<ImageMsg>>(this, color_topic);
+    depth_sub = std::make_shared<message_filters::Subscriber<ImageMsg>>(this, depth_topic);
+
+    syncApproximate = std::make_shared<message_filters::Synchronizer<approximate_sync_policy>>(approximate_sync_policy(10), *rgb_sub, *depth_sub);
+    syncApproximate->registerCallback(&RgbdInertialNode::GrabRGBD, this);
+
+    syncThread_ = new std::thread(&RgbdInertialNode::SyncWithImu, this);
 }
 
-MonoInertialNode::~MonoInertialNode()
+RgbdInertialNode::~RgbdInertialNode()
 {
     // Delete sync thread
     syncThread_->join();
@@ -26,25 +31,25 @@ MonoInertialNode::~MonoInertialNode()
     SLAM_->SaveKeyFrameTrajectoryTUM("KeyFrameTrajectory.txt");
 }
 
-void MonoInertialNode::GrabImu(const ImuMsg::SharedPtr msg)
+void RgbdInertialNode::GrabImu(const ImuMsg::SharedPtr msg)
 {
     imuMutex_.lock();
     imuBuf_.push(msg);
     imuMutex_.unlock();
 }
 
-void MonoInertialNode::GrabImage(const ImageMsg::SharedPtr msg)
+void RgbdInertialNode::GrabRGBD(const sensor_msgs::msg::Image::SharedPtr msgRGB, const sensor_msgs::msg::Image::SharedPtr msgD)
 {
     imgMutex_.lock();
 
     if (!imgBuf_.empty())
         imgBuf_.pop();
-    imgBuf_.push(msg);
+    imgBuf_.push({msgRGB, msgD});
 
     imgMutex_.unlock();
 }
 
-cv::Mat MonoInertialNode::GetImage(const ImageMsg::SharedPtr msg)
+cv::Mat RgbdInertialNode::GetImage(const ImageMsg::SharedPtr msg)
 {
     // Copy the ros image message to cv::Mat.
     cv_bridge::CvImageConstPtr cv_ptr;
@@ -69,22 +74,23 @@ cv::Mat MonoInertialNode::GetImage(const ImageMsg::SharedPtr msg)
     }
 }
 
-void MonoInertialNode::SyncWithImu()
+void RgbdInertialNode::SyncWithImu()
 {
     const double maxTimeDiff = 0.01;
 
     while (1)
     {
-        cv::Mat im;
+        cv::Mat imColor, imDepth;
         double tIm;
         if (!imgBuf_.empty() && !imuBuf_.empty())
         {
-            tIm = Utility::StampToSec(imuBuf_.front()->header.stamp);
+            tIm = Utility::StampToSec(imgBuf_.front().rgb->header.stamp);
             if (tIm > Utility::StampToSec(imuBuf_.back()->header.stamp))
                 continue;
 
             imgMutex_.lock();
-            im = GetImage(imgBuf_.front());
+            imColor = GetImage(imgBuf_.front().rgb);
+            imDepth = GetImage(imgBuf_.front().d);
             imgBuf_.pop();
             imgMutex_.unlock();
 
@@ -107,7 +113,7 @@ void MonoInertialNode::SyncWithImu()
             // if (mbClahe)
             //     mClahe->apply(im, im);
 
-            SLAM_->TrackMonocular(im, tIm, vImuMeas);
+            SLAM_->TrackRGBD(imColor, imDepth, tIm, vImuMeas);
 
             std::chrono::milliseconds tSleep(1);
             std::this_thread::sleep_for(tSleep);
