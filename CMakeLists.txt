@@ -71,7 +71,7 @@ add_executable(stereo-inertial
 )
 ament_target_dependencies(stereo-inertial rclcpp sensor_msgs cv_bridge ORB_SLAM3 Pangolin OpenCV)
 
-install(TARGETS mono mono-inertial rgbd stereo stereo-inertial DESTINATION lib/${PROJECT_NAME})
+install(TARGETS mono mono-inertial rgbd rgbd-inertial stereo stereo-inertial DESTINATION lib/${PROJECT_NAME})
 
 ament_package()
 
