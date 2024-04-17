@@ -56,28 +56,18 @@ cv::Mat RgbdInertialNode::GetImage(const ImageMsg::SharedPtr msg)
 
     try
     {
-        cv_ptr = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::MONO8);
+        cv_ptr = cv_bridge::toCvShare(msg);
     }
     catch (cv_bridge::Exception &e)
     {
         RCLCPP_ERROR(this->get_logger(), "cv_bridge exception: %s", e.what());
     }
 
-    if (cv_ptr->image.type() == 0)
-    {
-        return cv_ptr->image.clone();
-    }
-    else
-    {
-        std::cerr << "Error image type" << std::endl;
-        return cv_ptr->image.clone();
-    }
+    return cv_ptr->image.clone();
 }
 
 void RgbdInertialNode::SyncWithImu()
 {
-    const double maxTimeDiff = 0.01;
-
     while (1)
     {
         cv::Mat imColor, imDepth;
