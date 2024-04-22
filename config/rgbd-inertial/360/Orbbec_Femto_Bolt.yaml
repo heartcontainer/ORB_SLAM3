@@ -7,7 +7,7 @@ File.version: "1.0"
 
 Camera.type: "PinHole"
 
-# Right Camera calibration and distortion parameters (OpenCV)
+# Left Camera calibration and distortion parameters (OpenCV)
 Camera1.fx: 750.027
 Camera1.fy: 749.983
 Camera1.cx: 640.843
@@ -23,11 +23,21 @@ Camera1.p2: 0.0
 Camera.width: 1280
 Camera.height: 720
 
+Camera.newWidth: 640
+Camera.newHeight: 360
+
 # Camera frames per second 
 Camera.fps: 30
 
 # Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale)
 Camera.RGB: 1
+
+# Close/Far threshold. Baseline times.
+Stereo.ThDepth: 40.0
+Stereo.b: 0.0745
+
+# Depth map values factor
+RGBD.DepthMapFactor: 1000.0
 
 # Transformation from body-frame (imu) to left camera
 IMU.T_b_c1: !!opencv-matrix
@@ -81,3 +91,4 @@ Viewer.ViewpointX: 0.0
 Viewer.ViewpointY: -0.7
 Viewer.ViewpointZ: -3.5
 Viewer.ViewpointF: 500.0
+
