@@ -1400,6 +1400,11 @@ void System::InsertTrackTime(double& time)
 }
 #endif
 
+vector<MapPoint*> System::GetAllMapPoints()
+{
+    return mpAtlas->GetCurrentMap()->GetAllMapPoints();
+}
+
 void System::SaveAtlas(int type){
     if(!mStrSaveAtlasToFile.empty())
     {

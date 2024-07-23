@@ -192,6 +192,8 @@ public:
     void InsertTrackTime(double& time);
 #endif
 
+    std::vector<MapPoint *> GetAllMapPoints();
+
 private:
 
     void SaveAtlas(int type);
