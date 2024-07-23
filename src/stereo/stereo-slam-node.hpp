@@ -3,6 +3,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/image.hpp"
+#include <sensor_msgs/msg/point_cloud2.hpp>
 
 #include "message_filters/subscriber.h"
 #include "message_filters/synchronizer.h"
@@ -42,6 +43,9 @@ private:
     std::shared_ptr<message_filters::Subscriber<sensor_msgs::msg::Image> > right_sub;
 
     std::shared_ptr<message_filters::Synchronizer<approximate_sync_policy> > syncApproximate;
+
+    rclcpp::Node::SharedPtr m_node;
+    rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr m_pointcloud2_publisher;
 };
 
 #endif

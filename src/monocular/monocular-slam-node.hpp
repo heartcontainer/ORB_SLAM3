@@ -3,6 +3,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/image.hpp"
+#include <sensor_msgs/msg/point_cloud2.hpp>
 
 #include <cv_bridge/cv_bridge.h>
 
@@ -16,7 +17,7 @@
 class MonocularSlamNode : public rclcpp::Node
 {
 public:
-    MonocularSlamNode(ORB_SLAM3::System* pSLAM, const string &color_topic);
+    MonocularSlamNode(ORB_SLAM3::System *pSLAM, const string &color_topic);
 
     ~MonocularSlamNode();
 
@@ -25,11 +26,13 @@ private:
 
     void GrabImage(const sensor_msgs::msg::Image::SharedPtr msg);
 
-    ORB_SLAM3::System* m_SLAM;
+    ORB_SLAM3::System *m_SLAM;
 
     cv_bridge::CvImagePtr m_cvImPtr;
 
     rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr m_image_subscriber;
+    rclcpp::Node::SharedPtr m_node;
+    rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr m_pointcloud2_publisher;
 };
 
 #endif

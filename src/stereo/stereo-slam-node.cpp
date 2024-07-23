@@ -53,6 +53,9 @@ StereoSlamNode::StereoSlamNode(ORB_SLAM3::System* pSLAM, const string &strSettin
 
     syncApproximate = std::make_shared<message_filters::Synchronizer<approximate_sync_policy> >(approximate_sync_policy(10), *left_sub, *right_sub);
     syncApproximate->registerCallback(&StereoSlamNode::GrabStereo, this);
+
+    m_node = rclcpp::Node::make_shared("ORB_SLAM3_STEREO");
+    m_pointcloud2_publisher = m_node->create_publisher<sensor_msgs::msg::PointCloud2>("orbslam3/cloud", 10);
 }
 
 StereoSlamNode::~StereoSlamNode()
@@ -98,4 +101,7 @@ void StereoSlamNode::GrabStereo(const ImageMsg::SharedPtr msgLeft, const ImageMs
     {
         m_SLAM->TrackStereo(cv_ptrLeft->image, cv_ptrRight->image, Utility::StampToSec(msgLeft->header.stamp));
     }
+
+    sensor_msgs::msg::PointCloud2 cloud = Utility::MapPointsToPointCloud(m_SLAM->GetAllMapPoints(), "camera_link", m_node->get_clock()->now());
+    m_pointcloud2_publisher->publish(cloud);
 }
