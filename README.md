@@ -18,7 +18,7 @@ cd ~/ORB_SLAM3
 ```
 mkdir -p ros2_ws/src
 cd ~/ros2_ws/src
-git clone https://github.com/vibeus/ORB_SLAM3.git -b ros2_humble
+git clone https://github.com/vibeus/ORB_SLAM3.git -b humble
 
 cd ~/ros2_ws
 colcon build --symlink-install --packages-select orbslam3
